@@ -35,7 +35,12 @@ def get_inventory(start_index, search_key=None):
 
 
 def get_car(vin):
-    return get_inventory(0, vin)[0]
+    matches = get_inventory(0, vin)
+
+    if len(matches) == 0:
+        return None
+
+    return matches[0]
 
 
 def log_changes(uuid, field, old_value, new_value):
@@ -209,4 +214,5 @@ def main():
         start_index += 100
 
 if __name__ == "__main__":
-    main()
+    # main()
+    print(get_car("5YFEPMAE5NP326733"))
