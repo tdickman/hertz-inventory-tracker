@@ -220,6 +220,17 @@ def main():
 
     print(f"Total unique VINs encountered: {len(encountered_vins)}")
 
+    # Get VINs from the database that don't have a removal date
+    conn = sqlite3.connect('hertz_inventory.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT vin FROM cars WHERE removal_date IS NULL")
+    db_vins = set(row[0] for row in cursor.fetchall())
+    conn.close()
+
+    # Calculate potential removed VINs
+    potential_removed_vins = db_vins - encountered_vins
+    print(f"Potential removed VINs: {len(potential_removed_vins)}")
+
 if __name__ == "__main__":
     # main()
     print(get_car("5YFEPMAE5NP326733"))
