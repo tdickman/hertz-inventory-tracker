@@ -65,7 +65,8 @@ def store_cars(cars):
             inventory_type TEXT,
             link TEXT,
             first_seen TEXT,
-            last_seen TEXT
+            last_seen TEXT,
+            removal_date TEXT
         )
     ''')
 
@@ -139,8 +140,8 @@ def store_car(car, cursor):
 
     # Insert or update car data, preserving first_seen
     cursor.execute('''
-        INSERT INTO cars (uuid, vin, price, make, model, year, mileage, city, state, postal_code, inventory_date, inventory_type, link, first_seen, last_seen)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO cars (uuid, vin, price, make, model, year, mileage, city, state, postal_code, inventory_date, inventory_type, link, first_seen, last_seen, removal_date)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(uuid) DO UPDATE SET 
             vin = excluded.vin,
             price = excluded.price,
@@ -154,8 +155,9 @@ def store_car(car, cursor):
             inventory_date = excluded.inventory_date,
             inventory_type = excluded.inventory_type,
             link = excluded.link,
-            last_seen = excluded.last_seen
-    ''', (uuid, vin, price, make, model, year, mileage, city, state, postal_code, inventory_date, inventory_type, link, now, now))
+            last_seen = excluded.last_seen,
+            removal_date = excluded.removal_date
+    ''', (uuid, vin, price, make, model, year, mileage, city, state, postal_code, inventory_date, inventory_type, link, now, now, None))
 
     # Insert price data into car_prices table
     cursor.execute('''
