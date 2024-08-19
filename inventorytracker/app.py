@@ -34,13 +34,8 @@ def get_inventory(start_index, search_key=None):
     return cars
 
 
-def get_car(vin):
-    matches = get_inventory(0, vin)
-
-    if len(matches) == 0:
-        return None
-
-    return matches[0]
+def get_cars(vin):
+    return get_inventory(0, vin)
 
 
 def log_changes(uuid, field, old_value, new_value):
@@ -191,17 +186,23 @@ def store_car(car, cursor):
     ''', (uuid, mileage))
 
 
-def check_and_update_car(vin):
+def check_and_update_car(uuid):
     """
     Checks if a car is in inventory and updates the database accordingly.
-    
+
     Args:
         vin: The VIN of the car to check.
     """
-    car = get_car(vin)
-
     conn = sqlite3.connect('hertz_inventory.db')
     cursor = conn.cursor()
+
+    # Get the car's VIN from the database
+    cursor.execute("SELECT vin FROM cars WHERE uuid=?", (uuid,))
+    vin = cursor.fetchone()[0]
+
+    potential_cars = get_cars(vin)
+    # Get the car from the list with a matching uuid
+    car = next((car for car in potential_cars if car['uuid'] == uuid), None)
 
     if car:
         # Car is in inventory, store/update it
@@ -212,8 +213,8 @@ def check_and_update_car(vin):
         cursor.execute('''
             UPDATE cars
             SET removal_date = ?
-            WHERE vin = ?
-        ''', (now, vin))
+            WHERE uuid = ?
+        ''', (now, uuid))
 
     conn.commit()
     conn.close()
@@ -231,7 +232,7 @@ def main():
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"archive/{timestamp}.json"
     start_index = 0
-    encountered_vins = set()
+    encountered_uuids = set()
 
     while True:
         cars = get_inventory(start_index)
@@ -240,22 +241,24 @@ def main():
             break  # Stop if we get a page with no cars
 
         for car in cars:
-            encountered_vins.add(car['vin'])
+            encountered_uuids.add(car['uuid'])
 
         archive_cars(cars, filename)
         store_cars(cars)
         start_index += 100
 
-    # Get VINs from the database that don't have a removal date
+    # Get UUIDs from the database that don't have a removal date
     conn = sqlite3.connect('hertz_inventory.db')
     cursor = conn.cursor()
-    cursor.execute("SELECT vin FROM cars WHERE removal_date IS NULL")
-    db_vins = set(row[0] for row in cursor.fetchall())
+    cursor.execute("SELECT uuid FROM cars WHERE removal_date IS NULL")
+    db_uuids = set(row[0] for row in cursor.fetchall())
     conn.close()
 
     # Calculate potential removed VINs
-    potential_removed_vins = db_vins - encountered_vins
-    print(f"Potential removed VINs: {len(potential_removed_vins)}")
+    potential_removed_uuids = db_uuids - encountered_uuids
+    print(f"Potential removed UUIDs: {len(potential_removed_uuids)}. Checking each now..")
+    for uuid in potential_removed_uuids:
+        check_and_update_car(uuid)
 
 if __name__ == "__main__":
     # main()
