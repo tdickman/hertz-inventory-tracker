@@ -3,7 +3,7 @@ import requests
 import sqlite3
 from datetime import datetime
 
-def get_inventory(start_index):
+def get_inventory(start_index, search_key=None):
     """Gets a single page of inventory from the Hertz Car Sales API.
 
     Args:
@@ -13,6 +13,10 @@ def get_inventory(start_index):
         A list of dictionaries, where each dictionary represents a car.
     """
     url = f"https://www.hertzcarsales.com/apis/widget/INVENTORY_LISTING_GRID_AUTO_ALL:inventory-data-bus1/getInventory?geoRadius=0&geoZip=78701&sortBy=inventoryDate%20asc&start={start_index}&pageSize=100"
+
+    if search_key:
+        url += f"&search={search_key}"
+
     response = requests.get(url)
     response.raise_for_status()
 
@@ -28,6 +32,10 @@ def get_inventory(start_index):
         cars.append(combined_car)
 
     return cars
+
+
+def get_car(vin):
+    return get_inventory(0, vin)[0]
 
 
 def log_changes(uuid, field, old_value, new_value):
