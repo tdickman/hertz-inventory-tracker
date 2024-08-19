@@ -194,7 +194,7 @@ def archive_cars(cars, filename):
             f.write('\n')  # Separate each car with a newline
 
 
-if __name__ == "__main__":
+def main():
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"archive/{timestamp}.json"
     start_index = 0
@@ -207,3 +207,6 @@ if __name__ == "__main__":
         archive_cars(cars, filename)
         store_cars(cars)
         start_index += 100
+
+if __name__ == "__main__":
+    main()
