@@ -3,6 +3,8 @@ import os
 import requests
 import sqlite3
 from datetime import datetime
+import socks
+import socket
 
 def get_inventory(start_index, search_key=None, archive_key=None):
     """Gets a single page of inventory from the Hertz Car Sales API.
@@ -19,7 +21,15 @@ def get_inventory(start_index, search_key=None, archive_key=None):
     if search_key:
         url += f"&search={search_key}"
 
-    response = requests.get(url)
+    socks5_proxy = os.environ.get('SOCKS5')
+    if socks5_proxy:
+        proxy_ip, proxy_port = socks5_proxy.split(':')
+        socks.set_default_proxy(socks.SOCKS5, proxy_ip, int(proxy_port))
+        socket.socket = socks.socksocket
+        response = requests.get(url)
+    else:
+        response = requests.get(url)
+
     response.raise_for_status()
 
     data = response.json()
