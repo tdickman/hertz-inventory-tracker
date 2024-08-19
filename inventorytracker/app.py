@@ -96,7 +96,7 @@ def store_cars(cars):
         )
     ''')
 
-    for car in cars: 
+    for car in cars:
         store_car(car, cursor)
 
     conn.commit()
