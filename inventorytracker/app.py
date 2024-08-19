@@ -78,7 +78,25 @@ def store_cars(cars):
         )
     ''')
 
-    for car in cars:
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS car_inventory_dates (
+            uuid TEXT,
+            inventory_date TEXT,
+            timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (uuid) REFERENCES cars (uuid)
+        )
+    ''')
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS car_mileages (
+            uuid TEXT,
+            mileage INTEGER,
+            timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (uuid) REFERENCES cars (uuid)
+        )
+    ''')
+
+    for car in cars: 
         store_car(car, cursor)
 
     conn.commit()
@@ -113,7 +131,7 @@ def store_car(car, cursor):
              'city', 'state', 'postal_code', 'inventory_date',
              'inventory_type', 'link']
         ):
-            if field in ['price']:
+            if field in ['price', 'inventory_date', 'mileage']:
                 continue
 
             if existing_car[i] != locals()[field]:
@@ -144,6 +162,18 @@ def store_car(car, cursor):
         INSERT INTO car_prices (uuid, price)
         VALUES (?, ?)
     ''', (uuid, price))
+
+    # Insert inventory_date data into car_inventory_dates table
+    cursor.execute('''
+        INSERT INTO car_inventory_dates (uuid, inventory_date)
+        VALUES (?, ?)
+    ''', (uuid, inventory_date))
+
+    # Insert mileage data into car_mileages table
+    cursor.execute('''
+        INSERT INTO car_mileages (uuid, mileage)
+        VALUES (?, ?)
+    ''', (uuid, mileage))
 
 
 def archive_cars(cars, filename):
