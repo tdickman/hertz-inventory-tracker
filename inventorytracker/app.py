@@ -203,15 +203,22 @@ def main():
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"archive/{timestamp}.json"
     start_index = 0
+    encountered_vins = set()
 
     while True:
         cars = get_inventory(start_index)
         print(start_index, len(cars))
         if not cars:
             break  # Stop if we get a page with no cars
+        
+        for car in cars:
+            encountered_vins.add(car['vin'])
+        
         archive_cars(cars, filename)
         store_cars(cars)
         start_index += 100
+
+    print(f"Total unique VINs encountered: {len(encountered_vins)}")
 
 if __name__ == "__main__":
     # main()
