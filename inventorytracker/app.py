@@ -1,13 +1,15 @@
 import json
+import os
 import requests
 import sqlite3
 from datetime import datetime
 
-def get_inventory(start_index, search_key=None):
+def get_inventory(start_index, search_key=None, archive_key=None):
     """Gets a single page of inventory from the Hertz Car Sales API.
 
     Args:
         page_number: The page number to retrieve.
+        archive_key: The folder prefix to use for archiving the response.
 
     Returns:
         A list of dictionaries, where each dictionary represents a car.
@@ -35,7 +37,8 @@ def get_inventory(start_index, search_key=None):
 
 
 def get_cars(vin):
-    return get_inventory(0, vin)
+    inventory = get_inventory(0, vin)
+    return inventory
 
 
 def log_changes(uuid, field, old_value, new_value):
@@ -186,7 +189,7 @@ def store_car(car, cursor):
     ''', (uuid, mileage))
 
 
-def check_and_update_car(uuid):
+def check_and_update_car(uuid, file_prefix):
     """
     Checks if a car is in inventory and updates the database accordingly.
 
@@ -201,6 +204,7 @@ def check_and_update_car(uuid):
     vin = cursor.fetchone()[0]
 
     potential_cars = get_cars(vin)
+    archive_cars(file_prefix, potential_cars, 'by_vin')
     # Get the car from the list with a matching uuid
     car = next((car for car in potential_cars if car['uuid'] == uuid), None)
 
@@ -220,8 +224,9 @@ def check_and_update_car(uuid):
     conn.close()
 
 
-def archive_cars(cars, filename):
+def archive_cars(file_prefix, cars, name):
     """Appends cars to the JSON archive file."""
+    filename = f'{file_prefix}/{name}.txt'
     with open(filename, 'a') as f:  # Open in append mode
         for car in cars:
             json.dump(car, f)
@@ -230,7 +235,8 @@ def archive_cars(cars, filename):
 
 def main():
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"archive/{timestamp}.json"
+    file_prefix = f"archive/{timestamp}"
+    os.makedirs(file_prefix, exist_ok=True)
     start_index = 0
     encountered_uuids = set()
 
@@ -243,7 +249,7 @@ def main():
         for car in cars:
             encountered_uuids.add(car['uuid'])
 
-        archive_cars(cars, filename)
+        archive_cars(file_prefix, cars, "paginated_scan")
         store_cars(cars)
         start_index += 100
 
@@ -258,8 +264,9 @@ def main():
     potential_removed_uuids = db_uuids - encountered_uuids
     print(f"Potential removed UUIDs: {len(potential_removed_uuids)}. Checking each now..")
     for uuid in potential_removed_uuids:
-        check_and_update_car(uuid)
+        print(f"Checking car with UUID {uuid}")
+        check_and_update_car(uuid, file_prefix)
 
 if __name__ == "__main__":
-    # main()
-    print(get_car("5YFEPMAE5NP326733"))
+    main()
+    # print(get_car("5YFEPMAE5NP326733"))

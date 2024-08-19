@@ -4,7 +4,7 @@
 archive_dir="archive"
 
 # Set the age threshold in days
-age_threshold=7
+age_threshold=3
 
 # Get the current date in YYYYMMDD format
 current_date=$(date +%Y%m%d)
