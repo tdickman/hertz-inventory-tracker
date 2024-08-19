@@ -218,8 +218,6 @@ def main():
         store_cars(cars)
         start_index += 100
 
-    print(f"Total unique VINs encountered: {len(encountered_vins)}")
-
     # Get VINs from the database that don't have a removal date
     conn = sqlite3.connect('hertz_inventory.db')
     cursor = conn.cursor()
