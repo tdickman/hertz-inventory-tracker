@@ -191,6 +191,34 @@ def store_car(car, cursor):
     ''', (uuid, mileage))
 
 
+def check_and_update_car(vin):
+    """
+    Checks if a car is in inventory and updates the database accordingly.
+    
+    Args:
+        vin: The VIN of the car to check.
+    """
+    car = get_car(vin)
+
+    conn = sqlite3.connect('hertz_inventory.db')
+    cursor = conn.cursor()
+
+    if car:
+        # Car is in inventory, store/update it
+        store_car(car, cursor)
+    else:
+        # Car is not in inventory, set removal_date
+        now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        cursor.execute('''
+            UPDATE cars
+            SET removal_date = ?
+            WHERE vin = ?
+        ''', (now, vin))
+
+    conn.commit()
+    conn.close()
+
+
 def archive_cars(cars, filename):
     """Appends cars to the JSON archive file."""
     with open(filename, 'a') as f:  # Open in append mode
