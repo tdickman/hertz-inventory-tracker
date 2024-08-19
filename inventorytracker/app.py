@@ -220,6 +220,29 @@ def check_and_update_car(uuid):
     conn.close()
 
 
+def set_removal_date_for_old_cars():
+    """
+    Sets the removal_date for all cars where last_seen is before 2024-08-10
+    """
+    conn = sqlite3.connect('hertz_inventory.db')
+    cursor = conn.cursor()
+
+    cutoff_date = '2024-08-10'
+    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+    cursor.execute('''
+        UPDATE cars
+        SET removal_date = ?
+        WHERE last_seen < ? AND removal_date IS NULL
+    ''', (now, cutoff_date))
+
+    updated_rows = cursor.rowcount
+    print(f"Updated removal_date for {updated_rows} cars.")
+
+    conn.commit()
+    conn.close()
+
+
 def archive_cars(cars, filename):
     """Appends cars to the JSON archive file."""
     with open(filename, 'a') as f:  # Open in append mode
