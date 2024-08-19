@@ -210,10 +210,10 @@ def main():
         print(start_index, len(cars))
         if not cars:
             break  # Stop if we get a page with no cars
-        
+
         for car in cars:
             encountered_vins.add(car['vin'])
-        
+
         archive_cars(cars, filename)
         store_cars(cars)
         start_index += 100
